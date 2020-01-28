@@ -13,28 +13,15 @@ Feel free to adapt this script to generate special shapes, color ranges,... what
 
 
 import os
-
 from os import listdir
-
 from os.path import isfile, join
-
 import pandas as pd
-
 import numpy as np
-
 import cv2
-
 from typing import Union, Tuple, List
-
 import matplotlib.pyplot as plt
 
-
-
 RANDOM_SEED = 123
-
-
-
-
 
 def reshape_and_pad(image: np.ndarray, target_size: Union[List[int], Tuple[int]]):
 
@@ -68,13 +55,9 @@ def reshape_and_pad(image: np.ndarray, target_size: Union[List[int], Tuple[int]]
 
     new_size = tuple([int(x * ratio) for x in input_shape])
 
-
-
     # resize the image
 
     scaled_image = cv2.resize(image, (new_size[1], new_size[0]))
-
-
 
     # width and height differences
 
@@ -82,15 +65,11 @@ def reshape_and_pad(image: np.ndarray, target_size: Union[List[int], Tuple[int]]
 
     delta_h = target_size[0] - new_size[0]
 
-
-
     # image position within the new image
 
     top, bottom = delta_h // 2, delta_h - (delta_h // 2)
 
     left, right = delta_w // 2, delta_w - (delta_w // 2)
-
-
 
     # padding color
 
@@ -98,13 +77,7 @@ def reshape_and_pad(image: np.ndarray, target_size: Union[List[int], Tuple[int]]
 
     new_image = cv2.copyMakeBorder(scaled_image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=padding_color)
 
-
-
     return new_image
-
-
-
-
 
 def main():
 
@@ -120,7 +93,7 @@ def main():
 
     # the directory where the images are stored
 
-    input_data_directory = "data/images_train/"
+    input_data_directory = "data/images_test/"
 
     # get the image files in the directory
 
@@ -130,23 +103,11 @@ def main():
 
     # potentially take only a subset during development phase
 
-    # input_files = input_files[:30]
-
-
-
     # number of images
 
     n_images = len(input_files)
 
     print("found {} input files".format(n_images))
-
-
-
-    # define the point to split for the test set
-
-    test_split_point = int(n_images * 0.8)
-
-
 
     # permute the images in a reproducible way
 
@@ -154,27 +115,17 @@ def main():
 
     input_files = input_files[permutation]
 
-
-
     # shape of the image array
 
     array_shape = [n_images] + target_shape + [3]
 
     image_array = np.ndarray(shape=array_shape, dtype=np.uint8)
 
-
-
     # array for the targets
 
-    majority_df = pd.read_csv("data/stud_df_train.csv")
-
-
-
-
+    majority_df = pd.read_csv("data/stud_df_test.csv")
 
     targets = np.zeros((n_images, 4))
-
-
 
     # loop over all images, load and reshape them
 
@@ -196,8 +147,6 @@ def main():
 
         image_array[index] = scaled
 
-
-
         # extract the target
 
         part = majority_df[majority_df["image_path"] == input_file]
@@ -210,36 +159,22 @@ def main():
 
     # save the created image array
 
-    np.save("x_all.npy", image_array)
+    np.save("x_test.npy", image_array)
 
-    np.save("x_train.npy", image_array[:test_split_point])
+    np.save("names_for_x_test.npy", input_files)
 
-    np.save("x_valid.npy", image_array[test_split_point:])
-
-    np.save("names_for_x.npy", input_files)
-
-    np.save("y_all.npy", targets)
-
-    np.save("y_train.npy", targets[:test_split_point])
-
-    np.save("y_valid.npy", targets[test_split_point:])
-
+    np.save("y_test.npy", targets)
 
 
     # read the files again to see if they were created correctly
 
-    output_files = ["x_all.npy", "x_train.npy", "x_valid.npy", "names_for_x.npy", "y_all.npy", "y_train.npy",
-
-                    "y_valid.npy"]
+    output_files = ["x_test.npy", "names_for_x_test.npy", "y_test.npy"]
 
     for f in output_files:
 
         a = np.load(f)
 
         print("reloaded {} shape {}".format(f, a.shape))
-
-
-
 
 
 if __name__ == '__main__':
